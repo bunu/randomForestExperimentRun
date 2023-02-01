@@ -65,8 +65,8 @@ def run_random_forest(training_data: DataFrame, test_data: DataFrame, trees: int
     clf = RandomForestClassifier(n_estimators=trees)
     clf = clf.fit(transformed_training_attributes, transformed_training_targets)
     predictions = clf.predict(transformed_test_attributes)
-    accuracy = accuracy_score(transformed_test_targets, predictions)
     end_time = time.time()
+    accuracy = accuracy_score(transformed_test_targets, predictions)
     leaves, internal_nodes = calculate_node_information_number(clf.estimators_)
 
     print(f"Classification accuracy on test set: {accuracy}")
