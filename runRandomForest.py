@@ -2,6 +2,7 @@ import argparse
 import logging
 import time
 import numpy as np
+import pandas as pd
 
 from typing import List, Tuple
 
@@ -55,17 +56,28 @@ def calculate_node_information_number(trees: List[Tree]) -> Tuple[float, float]:
 
 
 def run_random_forest(training_data: DataFrame, test_data: DataFrame, trees: int, meta_data: MetaData):
+
     start_time = time.time()
+
+    # Set up attribute column transformer and target label encoders and then transform both training and test set,
+    # we fit on the full data in case of missing values in either the training or test sets
+    full_data = pd.concat([training_data, test_data])
     act = create_preprocessor_transformer(meta_data)
-    transformed_training_attributes = act.fit_transform(training_data[training_data.columns[:-1]])
+    act.fit(full_data[full_data.columns[:-1]])
+    transformed_training_attributes = act.transform(training_data[training_data.columns[:-1]])
     transformed_test_attributes = act.transform(test_data[test_data.columns[:-1]])
     tle = LabelEncoder()
-    transformed_training_targets = tle.fit_transform(training_data[training_data.columns[-1]])
+    tle.fit(full_data[full_data.columns[-1]])
+    transformed_training_targets = tle.transform(training_data[training_data.columns[-1]])
     transformed_test_targets = tle.transform(test_data[test_data.columns[-1]])
+
+    # Run the RF algorithm
     clf = RandomForestClassifier(n_estimators=trees)
     clf = clf.fit(transformed_training_attributes, transformed_training_targets)
     predictions = clf.predict(transformed_test_attributes)
     end_time = time.time()
+
+    # Generate and print statistics
     accuracy = accuracy_score(transformed_test_targets, predictions)
     leaves, internal_nodes = calculate_node_information_number(clf.estimators_)
 
